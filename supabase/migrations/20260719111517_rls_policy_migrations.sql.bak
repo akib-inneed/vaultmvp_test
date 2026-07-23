@@ -1,0 +1,221 @@
+-- todo: - for rls policy create another migration and put these on there
+
+
+-- Migration: Attorney/firm-dashboard RLS policies
+-- Context: Heirlo Firm Dashboard (see Technical Requirements v1.0, §5)
+--
+-- IMPORTANT — naming notes vs the spec doc, verified against the live schema:
+--   * consent column is `shared_with_firms_at` (plural "firms"), not `shared_with_firm_at`
+--   * profiles.role check is ('admin','attorney','user') — there is no 'client' value.
+--     This migration treats 'attorney' as the attorney role. If 'user' is meant to be
+--     the client role, confirm with the team before relying on it elsewhere.
+--   * firm_members uses `user_id`, not `profile_id`.
+--
+-- This migration is ADDITIVE: existing owner-based consumer policies (owner access,
+-- owner read/insert/update) are left untouched. It does not touch vaults/vault_members,
+-- which are out of scope for the firm dashboard.
+
+-- =========================================================================
+-- 0. Enable RLS on tables that currently have it disabled.
+--    (RLS DISABLED != API DISABLED — Data API being off does not enforce
+--    anything at the database level, and is not a substitute for RLS.)
+-- =========================================================================
+
+alter table public.firms          enable row level security;
+alter table public.firm_members   enable row level security;
+alter table public.client_invites enable row level security;
+alter table public.questions      enable row level security;
+
+-- =========================================================================
+-- 1. Helper function: is the current user an attorney member of a given firm?
+--
+--    SECURITY DEFINER + owned by the migration role (which has BYPASSRLS on
+--    Supabase) so this can safely query firm_members/profiles from inside a
+--    firm_members policy without recursing into RLS on itself.
+-- =========================================================================
+
+create or replace function public.is_attorney_for_firm(target_firm_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.firm_members fm
+    join public.profiles p on p.id = fm.user_id
+    where fm.firm_id = target_firm_id
+      and fm.user_id = auth.uid()
+      and p.role = 'attorney'
+  );
+$$;
+
+comment on function public.is_attorney_for_firm(uuid) is
+  'True if the current authenticated user is an attorney member of target_firm_id. '
+  'SECURITY DEFINER to avoid RLS self-recursion on firm_members.';
+
+-- Convenience helper: set of firm_ids the current user is an attorney member of.
+create or replace function public.attorney_firm_ids()
+returns setof uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select fm.firm_id
+  from public.firm_members fm
+  join public.profiles p on p.id = fm.user_id
+  where fm.user_id = auth.uid()
+    and p.role = 'attorney';
+$$;
+
+comment on function public.attorney_firm_ids() is
+  'Firm ids the current authenticated user is an attorney member of.';
+
+-- =========================================================================
+-- 2. firms — attorney may read only their own firm's row(s)
+-- =========================================================================
+
+create policy "attorney read own firm"
+on public.firms
+for select
+to authenticated
+using (
+  public.is_attorney_for_firm(id)
+);
+
+-- =========================================================================
+-- 3. firm_members — attorney may read only their own firm's membership rows
+-- =========================================================================
+
+create policy "attorney read own firm members"
+on public.firm_members
+for select
+to authenticated
+using (
+  public.is_attorney_for_firm(firm_id)
+);
+
+-- =========================================================================
+-- 4. profiles — attorney read of a client profile, gated on firm match AND
+--    consent. Pre-consent roster names/status come from client_invites, not
+--    from this table, so this policy stays strict (no partial/roster carve-out).
+-- =========================================================================
+
+create policy "attorney read consented client profile"
+on public.profiles
+for select
+to authenticated
+using (
+  firm_id is not null
+  and shared_with_firms_at is not null
+  and public.is_attorney_for_firm(firm_id)
+);
+
+-- =========================================================================
+-- 5. items — attorney read where the item's owner is a consented client of
+--    the attorney's firm.
+-- =========================================================================
+
+create policy "attorney read items of consented firm clients"
+on public.items
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles p
+    where p.id = items.owner_id
+      and p.firm_id is not null
+      and p.shared_with_firms_at is not null
+      and public.is_attorney_for_firm(p.firm_id)
+  )
+);
+
+-- =========================================================================
+-- 6. beneficiaries — same predicate as items, via owner_id.
+-- =========================================================================
+
+create policy "attorney read beneficiaries of consented firm clients"
+on public.beneficiaries
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles p
+    where p.id = beneficiaries.owner_id
+      and p.firm_id is not null
+      and p.shared_with_firms_at is not null
+      and public.is_attorney_for_firm(p.firm_id)
+  )
+);
+
+-- =========================================================================
+-- 7. client_invites — attorney may read and create invites for their own firm.
+-- =========================================================================
+
+create policy "attorney read own firm invites"
+on public.client_invites
+for select
+to authenticated
+using (
+  public.is_attorney_for_firm(firm_id)
+);
+
+create policy "attorney create own firm invites"
+on public.client_invites
+for insert
+to authenticated
+with check (
+  public.is_attorney_for_firm(firm_id)
+  and invited_by = auth.uid()
+);
+
+-- =========================================================================
+-- 8. questions — attorney may read and update (e.g. mark handled) questions
+--    routed to their own firm.
+-- =========================================================================
+
+create policy "attorney read own firm questions"
+on public.questions
+for select
+to authenticated
+using (
+  public.is_attorney_for_firm(firm_id)
+);
+
+create policy "attorney update own firm questions"
+on public.questions
+for update
+to authenticated
+using (
+  public.is_attorney_for_firm(firm_id)
+)
+with check (
+  public.is_attorney_for_firm(firm_id)
+);
+
+-- =========================================================================
+-- Notes for whoever runs this:
+--
+-- 1. Apply to a staging/branch project first, not production (per spec §12 step 1-2).
+-- 2. After applying, run the §5.1 adversarial tests before any UI work proceeds:
+--      a. Attorney in Firm A queries a client belonging to Firm B      -> 0 rows
+--      b. Attorney in Firm A queries a Firm A client, not yet consented -> 0 rows
+--      c. Attorney in Firm A queries a properly-shared Firm A client   -> expected rows
+--      d. A role='attorney'-less (client) account attempts any attorney query -> denied
+--    (d) is satisfied automatically here since is_attorney_for_firm() requires both
+--    a firm_members row AND profiles.role = 'attorney' for the calling user.
+-- 3. The `items`/`profiles` `owner_access` and `beneficiaries` `owner access` (ALL)
+--    policies remain in force unchanged — this migration only adds attorney SELECT
+--    (and scoped INSERT/UPDATE on client_invites/questions) on top.
+-- 4. This migration does NOT touch the Data API "enabled/disabled" toggle for any
+--    table — that's a separate project setting, not something a SQL migration controls.
+--    Confirm which tables should have the Data API re-enabled once policies are tested.
+-- 5. Storage/photo access is NOT handled by any policy here — per spec §9, photos
+--    must be served through a service-role server route that re-checks this same
+--    firm-match + consent predicate in application code, not through direct
+--    Storage RLS against the attorney's JWT.
+-- =========================================================================

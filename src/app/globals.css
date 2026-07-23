@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --black: #0C1519;
+  --jungle: #162127;
+  --jet: #2A3038;
+  --coffee: #724B39;
+  --brass: #CF9D7B;
+  --ink: #E8E0D4;
+  --red: #E8341A;
+  --amber: #D97706;
+}
+
+body {
+  color: var(--ink);
+  background: var(--black);
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

@@ -1,0 +1,10 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" rx="6" fill="#0C1519"/>
+  <defs>
+    <filter id="halo-glow" x="0" y="0" width="32" height="16" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="1.5"/>
+    </filter>
+  </defs>
+  <ellipse cx="16" cy="8" rx="10" ry="3" stroke="#CF9D7B" stroke-width="1.5" fill="none" filter="url(#halo-glow)"/>
+  <text x="16" y="26" text-anchor="middle" font-family="'Fraunces', serif" font-weight="900" font-size="18" fill="#CF9D7B">H</text>
+</svg>

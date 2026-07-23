@@ -1,0 +1,5 @@
+export const CLIENT_STATUS = {
+  IN_PROGRESS: "IN_PROGRESS",
+  SHARED: "SHARED",
+  INVITED: "INVITED",
+};
