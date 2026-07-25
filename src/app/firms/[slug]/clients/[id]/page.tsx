@@ -9,6 +9,19 @@ interface Props {
   params: Promise<{ slug: string; id: string }>;
 }
 
+type Beneficiary = {
+  email?: string | null;
+  full_name?: string | null;
+  priority?: number | string | null;
+};
+
+type ClientItem = {
+  id: string;
+  name: string;
+  description?: string | null;
+  beneficiaries?: Beneficiary[] | null;
+};
+
 function getItemIcon(itemName: string) {
   const name = itemName.toLowerCase();
   if (
@@ -43,7 +56,7 @@ export default async function ClientDetailPage({ params }: Props) {
   const detail = await getClientDetail(id);
 
   if (detail?.status == "unauthorize") {
-    return <div>Client didn't shared.</div>;
+    return <div>Client didn&apos;t shared.</div>;
   }
 
   if (!detail) {
@@ -62,8 +75,8 @@ export default async function ClientDetailPage({ params }: Props) {
     : "";
 
   const uniqueRecipients = new Set<string>();
-  items?.forEach((item: any) => {
-    item.beneficiaries?.forEach((ben: any) => {
+  items?.forEach((item: ClientItem) => {
+    item.beneficiaries?.forEach((ben: Beneficiary) => {
       if (ben.email) {
         uniqueRecipients.add(ben.email.toLowerCase());
       } else if (ben.full_name) {
@@ -121,15 +134,15 @@ export default async function ClientDetailPage({ params }: Props) {
             No items to show
           </h3>
           <p className="font-sans text-[12px] text-[var(--fw-muted)] max-w-[280px] leading-[1.5] m-0">
-            This client hasn't catalogued any items in their vault yet.
+            This client hasn&apos;t catalogued any items in their vault yet.
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-[18px]">
-          {items?.map((item: any) => {
+          {items?.map((item: ClientItem) => {
             const recipientText =
               item.beneficiaries && item.beneficiaries.length > 0
-                ? `For: ${item.beneficiaries.map((b: any) => `${b.full_name} (${b.priority})`).join(", ")}`
+                ? `For: ${item.beneficiaries.map((b: Beneficiary) => `${b.full_name} (${b.priority})`).join(", ")}`
                 : "No beneficiary named";
 
             return (

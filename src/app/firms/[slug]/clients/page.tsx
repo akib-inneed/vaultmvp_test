@@ -203,7 +203,7 @@ export default async function ClientsPage({ params }: Props) {
 
       {/* Consent note */}
       <div className="flex items-start lg:items-center gap-1.5 px-1.5 py-3 text-[11.5px] text-[var(--fw-muted)] italic font-['Fraunces',serif]">
-        <i className="ti ti-lock mt-0.5 lg:mt-0" /> You can open a client's
+        <i className="ti ti-lock mt-0.5 lg:mt-0" /> You can open a client&apos;s
         items only after they choose to share.
       </div>
     </div>

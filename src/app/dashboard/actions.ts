@@ -8,7 +8,7 @@ export async function acceptTerms() {
   console.log(user)
   if (!user) return { error: 'Not authenticated' };
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('profiles')
     .update({ terms_accepted_at: new Date().toISOString() })
     .eq('id', user.id)

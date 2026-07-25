@@ -53,6 +53,10 @@ export async function getFirmClients(slug: string) {
     .select("*")
     .in("status", ["sent", "opened"]);
 
+  if (inviteError) {
+    console.error("Error fetching invites:", inviteError);
+  }
+
   const registeredClients = profilesData?.map((profile) => {
     const count = profile.item_count.at(0)?.count ?? 0;
 
@@ -89,9 +93,13 @@ export async function getFirmClients(slug: string) {
     };
   });
 
-  let data = [...registeredClients, ...invitesData];
+  const data = [...(registeredClients ?? []), ...(invitesData ?? [])];
 
-  data.sort((a, b) => a.timestamp - b.timestamp);
+  data.sort(
+    (a, b) =>
+      new Date(a.timestamp ?? 0).getTime() -
+      new Date(b.timestamp ?? 0).getTime(),
+  );
 
   console.log(data);
 
@@ -169,7 +177,7 @@ export async function getInvitedClient(token: string) {
 
 export async function updateInviteOpenStatus(id: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("client_invites")
     .update({
       status: "opened",
