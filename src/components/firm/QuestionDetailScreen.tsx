@@ -59,9 +59,9 @@ export const QuestionDetailScreen: FC<QuestionDetailScreenProps> = ({ onNavigate
 
       {/* Question text */}
       <div className="text-[14.5px] text-[var(--fw-ink)] leading-[1.65] font-['Fraunces',serif] font-light bg-[var(--fw-linen)] rounded-[10px] py-4 px-[18px] mb-2">
-        "My mother, Eleanor, left me her sapphire ring and her recipe collection through Heirlo.
+        &quot;My mother, Eleanor, left me her sapphire ring and her recipe collection through Heirlo.
         I accepted them. Do I need to do anything now to make it official, or does that happen later?
-        And should I be thinking about my own planning too?"
+        And should I be thinking about my own planning too?&quot;
       </div>
 
       {/* Context strip */}

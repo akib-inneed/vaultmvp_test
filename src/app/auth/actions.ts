@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getClientInvite, getInvitedClient } from "@/lib/service/clientRoaster";
+import { getInvitedClient } from "@/lib/service/clientRoaster";
 
 export async function login(formData: FormData, redirectTo?: string) {
   const supabase = await createClient();
@@ -19,7 +19,7 @@ export async function login(formData: FormData, redirectTo?: string) {
     return { error: error.message };
   }
 
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", auth.user.id)
@@ -77,7 +77,13 @@ export async function signup(formData: FormData, redirectTo?: string) {
 
   // Create profile record
   if (data.user) {
-    let payload = {
+    const payload: {
+      id: string;
+      full_name: string;
+      email: string;
+      firm_id: string | null;
+      role: string | null;
+    } = {
       id: data.user.id,
       full_name,
       email,

@@ -9,16 +9,20 @@ const inputClass =
   "w-full px-4 py-3 rounded-xl border border-ink/20 bg-jet/50 text-ink placeholder-ink/40 font-sans text-sm focus:outline-none focus:ring-2 focus:ring-teal focus:border-transparent transition";
 
 export default function AuthPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-cream" />}>
+      <AuthPageContent />
+    </Suspense>
+  );
+}
+
+function AuthPageContent() {
   const searchParams = useSearchParams();
 
   const create = searchParams.get("create");
   const token = searchParams.get("token");
 
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-cream" />}>
-      <AuthForm params={{ create, token }} />
-    </Suspense>
-  );
+  return <AuthForm params={{ create, token }} />;
 }
 
 function AuthForm({

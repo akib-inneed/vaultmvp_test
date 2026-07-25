@@ -1,7 +1,6 @@
 import { getClientInvite } from "@/lib/service/clientRoaster";
 import { getFirmInitial } from "@/lib/email";
 import { getFirmBySlug } from "@/lib/service/firm";
-import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -15,13 +14,9 @@ interface Props {
 export default async function InviteSentPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const { q } = await searchParams;
-  const supabase = await createClient();
 
   const firm = await getFirmBySlug(slug);
   const invite = await getClientInvite(q!);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   if (!firm || !invite) {
     notFound();

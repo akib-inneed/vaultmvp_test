@@ -1,7 +1,4 @@
-import {
-  getInvitedClient,
-  updateInviteOpenStatus,
-} from "@/lib/service/clientRoaster";
+import { getInvitedClient } from "@/lib/service/clientRoaster";
 import { getFirmBySlug } from "@/lib/service/firm";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
@@ -11,7 +8,7 @@ interface Props {
   params: Promise<{ firmSlug: string; token: string }>;
 }
 
-export async function getStarted(formData: FormData) {
+async function getStarted(formData: FormData) {
   "use server";
   // Your server-side logic here
   const supabase = await createClient();
@@ -19,7 +16,7 @@ export async function getStarted(formData: FormData) {
   const userId = formData.get("user_id") as string;
   const token = formData.get("token") as string;
 
-  const { data: updateData, error: updateError } = await supabase
+  const { error: inviteError } = await supabase
     .from("client_invites")
     .update({
       status: "claimed",
@@ -27,13 +24,21 @@ export async function getStarted(formData: FormData) {
     .eq("token", token)
     .select();
 
-  const { data, error } = await supabase
+  const { error: profileError } = await supabase
     .from("profiles")
     .update({
       firm_id: firmId,
     })
     .eq("id", userId)
     .select();
+
+  if (inviteError) {
+    throw new Error(inviteError.message);
+  }
+
+  if (profileError) {
+    throw new Error(profileError.message);
+  }
 
   redirect("/dashboard");
 }
@@ -52,7 +57,7 @@ export default async function JoinPage({ params }: Props) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: profile, error } = await supabase
+  const { data: profile } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user?.id)

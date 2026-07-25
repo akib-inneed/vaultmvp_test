@@ -37,7 +37,7 @@ export const InviteClientScreen: FC<InviteClientScreenProps> = ({ onNavigate }) 
 
     <div className="max-w-[520px]">
       <p className="text-[13.5px] text-[var(--fw-ink-soft)] leading-[1.6] my-1.5 mb-5 max-w-[480px]">
-        Enter your client's details. Heirlo emails them a co-branded invitation right away, from your firm,
+        Enter your client&apos;s details. Heirlo emails them a co-branded invitation right away, from your firm,
         and sets up their account so they can start documenting. Their name, phone, and email pre-fill their profile.
       </p>
 
@@ -64,7 +64,7 @@ export const InviteClientScreen: FC<InviteClientScreenProps> = ({ onNavigate }) 
         <i className="ti ti-shield-check text-[var(--fw-coffee)] text-[17px] mt-[1px]" />
         <div className="text-xs text-[var(--fw-ink-soft)] leading-[1.5]">
           Heirlo emails Eleanor a co-branded invitation the moment you send. Her details are bound to the
-          invite, so her record is set up and confirmed as your client's when she opens it.
+          invite, so her record is set up and confirmed as your client&apos;s when she opens it.
         </div>
       </div>
 

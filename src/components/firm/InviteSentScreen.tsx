@@ -36,7 +36,7 @@ export const InviteSentScreen: FC<InviteSentScreenProps> = ({ onNavigate }) => (
       </div>
       <div className="text-[13px] text-[var(--fw-ink)] leading-[1.4]">
         A co-branded invitation was emailed to <strong>eleanor.m@email.com</strong>.
-        She'll show as <strong>Invited</strong> in your roster until she gets started.
+        She&apos;ll show as <strong>Invited</strong> in your roster until she gets started.
       </div>
     </div>
 
@@ -91,8 +91,8 @@ export const InviteSentScreen: FC<InviteSentScreenProps> = ({ onNavigate }) => (
           Get started with Heirlo
         </div>
         <div className="text-[10.5px] text-[var(--fw-muted)] italic leading-[1.5] border-t border-[#F0E9DE] pt-3">
-          [Placeholder for April: this email is co-branded and sent by Heirlo on the firm's behalf.
-          Consent framing, any reference to the attorney-client relationship, and UPC 2-513 / "memorandum" language
+          [Placeholder for April: this email is co-branded and sent by Heirlo on the firm&apos;s behalf.
+          Consent framing, any reference to the attorney-client relationship, and UPC 2-513 / &quot;memorandum&quot; language
           to be reviewed before launch. Includes unsubscribe and sender identification per CAN-SPAM.]
         </div>
       </div>
